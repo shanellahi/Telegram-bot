@@ -6,7 +6,18 @@ import random
 from datetime import datetime, timedelta
 from telegram import Update, Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
-from replit import db
+import json, os
+
+DB_FILE = "database.json"
+if os.path.exists(DB_FILE):
+    with open(DB_FILE, "r") as f:
+        db = json.load(f)
+else:
+    db = {}
+
+def save_db():
+    with open(DB_FILE, "w") as f:
+        json.dump(db, f, indent=4)
 
 # Environment variables
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -93,6 +104,7 @@ def mark_user_visited(user_id: int):
         "user_id": user_id
     }
     db[first_visit_key] = visit_data
+save_db()
 
 def store_captcha_verification(user_id: int):
     """Store CAPTCHA verification timestamp"""
@@ -102,6 +114,7 @@ def store_captcha_verification(user_id: int):
         "user_id": user_id
     }
     db[captcha_key] = captcha_data
+    save_db()
 
 def generate_captcha() -> tuple:
     """Generate CAPTCHA with correct emoji and 3 distractors"""
@@ -138,7 +151,9 @@ def store_wallet_mapping(wallet_address: str, telegram_id: int, plan_days: int):
     }
     
     db[wallet_key] = wallet_data
+    save_db()
     db[user_key] = user_data
+    save_db()
 
 def check_payment(address: str, amount: float) -> bool:
     # USDT contract address on BSC
